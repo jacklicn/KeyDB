@@ -55,6 +55,7 @@
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <limits.h>
+#include <unistd.h>
 #include <float.h>
 #include <math.h>
 #include <sys/utsname.h>
@@ -6517,8 +6518,8 @@ int linuxMadvFreeForkBugCheck(void) {
     int ret, pipefd[2];
     pid_t pid;
     char *p, *q, bug_found = 0;
-    unsigned long page_size = sysconf(_SC_PAGESIZE);
-    const long map_size = 3 * page_size
+    const long page_size = sysconf(_SC_PAGESIZE);
+    const long map_size = 3 * page_size;
 
     /* Create a memory map that's in our full control (not one used by the allocator). */
     p = (char*)mmap(NULL, map_size, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
