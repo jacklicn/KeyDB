@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <glob.h>
 #ifdef __linux__
 #include <sys/sysinfo.h>
 #endif
@@ -593,7 +594,22 @@ void loadServerConfigFromString(char *config) {
                 fclose(logfp);
             }
         } else if (!strcasecmp(argv[0],"include") && argc == 2) {
-            loadServerConfig(argv[1], 0, NULL);
+            glob_t globbuf;
+            int ret;
+            ret = glob(argv[1], GLOB_ERR, NULL, &globbuf);
+            if (ret != EXIT_SUCCESS && ret != GLOB_NOMATCH) {
+                strerror(errno);
+                err = sdscatprintf(sdsempty(),
+                    "Error handling include directive: %s", strerror(errno));
+                globfree(&globbuf);
+                goto loaderr;
+            }
+
+            for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+                loadServerConfig(globbuf.gl_pathv[i], 0, NULL);
+            }
+
+            globfree(&globbuf);
         } else if ((!strcasecmp(argv[0],"slaveof") ||
                     !strcasecmp(argv[0],"replicaof")) && argc == 3) {
             slaveof_linenum = linenum;
